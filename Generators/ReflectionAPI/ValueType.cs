@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Generators
+namespace Generators.ReflectionAPI
 {
     /// <summary>
     /// Базовый класс для всех Value типов.
