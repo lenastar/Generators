@@ -57,11 +57,14 @@ namespace Generators.Expressions
             //   p => Tuple(p.Name,p.GetValue(obj))
 
             var type = typeof(T);
-            var newExpression = Expression.New(type);
-            var param = Expression.Parameter(obj.GetType(), "p");
-            var list = new List<MemberBinding>();
-            var propertyInfos = type.GetProperties(BindingFlags.Instance |
+            var info = Expression.Parameter(typeof(string), "info");
+            var context = Expression.Parameter(typeof(string), "context");
+        //    var newExpression = Expression.New(typeof(T).GetConstructor(new[] {typeof(string), typeof(string)}));
+            var param = Expression.Parameter(typeof(T), "p");
+         //   var list = new List<MemberBinding>();
+            var propertyInfos = obj.GetType().GetProperties(BindingFlags.Instance |
                                                    BindingFlags.Public);
+            var expressions = new List<Expression>();
             foreach (var propertyInfo in propertyInfos)
             {
                 Expression call = Expression.Call(
@@ -74,17 +77,15 @@ namespace Generators.Expressions
                     },
                     new Expression[]
                     {
-                        Expression.Parameter(typeof(string),"property name"),
+                        Expression.Parameter(typeof(string), "property name"),
                         GetValueExpression(propertyInfo)
                     }
-                    );
-
-                MemberBinding mb = Expression.Bind(propertyInfo.GetSetMethod(), call);
-                list.Add(mb);
+                );
+                    expressions.Add(call);
             }
-            var ex = Expression.Lambda<Func<object,List<Tuple<string,object>>>>(
-                Expression.MemberInit(newExpression, list),
-                new[] { param});
+            var ex = Expression.Lambda<Func<object, List<Tuple<string, object>>>>(
+                Expression.Block(expressions),
+                new[] { param });
             var resFunc = ex.Compile();
 
             return resFunc(obj);
@@ -92,12 +93,12 @@ namespace Generators.Expressions
             //      .Select(x => Tuple.Create(x.Name, x.GetValue(obj)))
             //      .ToList();
         }
-
+        
         private static MethodCallExpression GetValueExpression(PropertyInfo propertyInfo)
         {
-            return Expression.Call(propertyInfo.GetType(),
+            return Expression.Call(typeof(PropertyInfo),
                 "GetValue",
-                new []
+                new[]
                 {
                     typeof(object)
                 },
