@@ -48,6 +48,7 @@
     <Compile Include="Domains\PersonName.cs" />
     <Compile Include="Expressions\ValueType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection.Emit\ValueType.cs" />
     <Compile Include="ReflectionAPI\ValueType.cs" />
     <Compile Include="ValueType_PerformanceTests.cs" />
     <Compile Include="ValueType_Tests.cs" />
@@ -55,9 +56,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Reflection.Emit\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

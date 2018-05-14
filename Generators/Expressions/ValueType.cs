@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Generators.Expressions
 {
@@ -60,9 +59,9 @@ namespace Generators.Expressions
             var info = Expression.Parameter(typeof(string), "info");
             var context = Expression.Parameter(typeof(string), "context");
         //    var newExpression = Expression.New(typeof(T).GetConstructor(new[] {typeof(string), typeof(string)}));
-            var param = Expression.Parameter(typeof(T), "p");
+            var param = Expression.Parameter(type, "p");
          //   var list = new List<MemberBinding>();
-            var propertyInfos = obj.GetType().GetProperties(BindingFlags.Instance |
+            var propertyInfos = type.GetProperties(BindingFlags.Instance |
                                                    BindingFlags.Public);
             var expressions = new List<Expression>();
             foreach (var propertyInfo in propertyInfos)
@@ -96,6 +95,7 @@ namespace Generators.Expressions
         
         private static MethodCallExpression GetValueExpression(PropertyInfo propertyInfo)
         {
+            //TODO: System.REflection.PropertyInfo не имеет метода getValue???
             return Expression.Call(typeof(PropertyInfo),
                 "GetValue",
                 new[]
