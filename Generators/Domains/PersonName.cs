@@ -1,9 +1,10 @@
 ﻿
+using Generators.Domains;
 using Generators.Expressions;
 
 namespace Generators
 {
-    public class PersonName : ValueType<PersonName>
+    public class PersonName:IDomain
     {
         public PersonName(string firstName, string lastName)
         {

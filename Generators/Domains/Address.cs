@@ -1,9 +1,10 @@
 ﻿
+using Generators.Domains;
 using Generators.Expressions;
 
 namespace Generators
 {
-    public class Address : ValueType<Address>
+    public class Address:IDomain
     {
         public Address(string street, string building)
         {

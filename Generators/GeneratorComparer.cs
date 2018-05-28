@@ -10,6 +10,11 @@ namespace Generators
 {
     class GeneratorComparer<T> : IEqualityComparer<T>
     {
+        //TODO: Create constructor to choose generator method 
+       // GeneratorComparer()
+       // {
+
+      //  }
         bool IEqualityComparer<T>.Equals(T t1,T t2)
         {
             var objProperties = GetPropertiesValues(t1);
@@ -27,7 +32,7 @@ namespace Generators
                 .ToList();
         }
 
-        public bool EqualsByExpressions(T t1, T t2)
+        public static bool EqualsByExpressions(T t1, T t2)
         {
             //Func<x,y,bool> Equals = (x,y) => GetPropertiesvalues(x).Zip(GetPropValues(y),(k,l)=>k.Equals(l)).All(x=>x) 
             ParameterExpression value1 = Expression.Parameter(typeof(T), "t1");
@@ -35,11 +40,11 @@ namespace Generators
             Type type = typeof(GeneratorComparer<T>);
             MethodCallExpression GetProperties1 =
                 Expression.Call(type.GetMethod("GetPropertiesValuesByExpressions",
-                                    new[] { typeof(T) }) ?? throw new InvalidOperationException(),
+                                    new[] { typeof(T) }),
             value1);
             MethodCallExpression GetProperties2 =
                 Expression.Call(type.GetMethod("GetPropertiesValuesByExpressions",
-                                    new[] {typeof(T)}) ?? throw new InvalidOperationException(),
+                                    new[] {typeof(T)}),
                     value2);
             List<Tuple<string, T>> properties1 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties1, value1).Compile()(t1);
             List<Tuple<string, T>> properties2 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties2, value2).Compile()(t2);
@@ -53,7 +58,7 @@ namespace Generators
 
         }
 
-        private List<Tuple<string, T>> GetPropertiesValuesByExpressions(T obj)
+        public static List<Tuple<string, T>> GetPropertiesValuesByExpressions(T obj)
         {
             //Func<obj, lisTuple<string,object>>> getPV =
             //   p => Tuple(p.Name,p.GetValue(obj))

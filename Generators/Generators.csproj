@@ -45,8 +45,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domains\Address.cs" />
+    <Compile Include="Domains\IDomain.cs" />
     <Compile Include="Domains\PersonName.cs" />
     <Compile Include="Expressions\ValueType.cs" />
+    <Compile Include="GeneratorComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reflection.Emit\ValueType.cs" />
     <Compile Include="ReflectionAPI\ValueType.cs" />
