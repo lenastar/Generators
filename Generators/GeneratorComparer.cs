@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Exortech.NetReflector;
 
 namespace Generators
 {
@@ -77,7 +78,7 @@ namespace Generators
                     {
                         typeof(string),
                         type
-                    }, Expression.Parameter(typeof(string), "property name"), GetValueExpression(propertyInfo));
+                    },new Expression[]{ Expression.Parameter(typeof(string), "property name"), GetValueExpression(propertyInfo)});
                 expressions.Add(call);
             }
             var ex = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(
@@ -86,18 +87,23 @@ namespace Generators
         }
         private static MethodCallExpression GetValueExpression(PropertyInfo propertyInfo)
         {
-            return Expression.Call(typeof(PropertyInfo),
+            var type = typeof(PropertyInfo);
+            return Expression.Call(type,
                 "GetValue",
                 new[]
                 {
-                    typeof(object)
-                }, Expression.Parameter(typeof(object),"value"));
+                    typeof(T),
+                }, new Expression[]{Expression.Parameter(typeof(T),"value")});
         }
 
-        //public bool EqualsByReflectionEmit(T x, T y)
+        public delegate bool EqualsByReflectionEmit(T x, T y);
+
+        //private EqualsByReflectionEmit GenerateEqualsByReflectionEmit(IDictionary<string, string> mapping)
         //{
 
+
         //}
+
         public int GetHashCode(T x)
         {
             throw new NotImplementedException();

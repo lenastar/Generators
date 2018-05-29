@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NetReflector, Version=1.1.2009.1214, Culture=neutral, PublicKeyToken=2f4dd8b32acbcd8e, processorArchitecture=MSIL">
+      <HintPath>..\packages\NetReflector.1.1.2009\lib\net20\NetReflector.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=3.6.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.6.0\lib\net45\nunit.framework.dll</HintPath>
       <Private>True</Private>
@@ -47,11 +50,8 @@
     <Compile Include="Domains\Address.cs" />
     <Compile Include="Domains\IDomain.cs" />
     <Compile Include="Domains\PersonName.cs" />
-    <Compile Include="Expressions\ValueType.cs" />
     <Compile Include="GeneratorComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Reflection.Emit\ValueType.cs" />
-    <Compile Include="ReflectionAPI\ValueType.cs" />
     <Compile Include="ValueType_PerformanceTests.cs" />
     <Compile Include="ValueType_Tests.cs" />
   </ItemGroup>

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using Generators.Expressions;
 using NUnit.Framework;
 
 namespace Generators
@@ -9,7 +8,7 @@ namespace Generators
 	[TestFixture]
 	public class ValueType_PerformanceTests
 	{
-		public class PersonName_WithHandcodedHashCode : ValueType<PersonName>
+		public class PersonName_WithHandcodedHashCode 
 		{
 			public PersonName_WithHandcodedHashCode(string firstName, string lastName)
 			{
