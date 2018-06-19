@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using Exortech.NetReflector;
@@ -12,11 +13,11 @@ namespace Generators
     class GeneratorComparer<T> : IEqualityComparer<T>
     {
         //TODO: Create constructor to choose generator method 
-       // GeneratorComparer()
-       // {
+        // GeneratorComparer()
+        // {
 
-      //  }
-        bool IEqualityComparer<T>.Equals(T t1,T t2)
+        //  }
+        bool IEqualityComparer<T>.Equals(T t1, T t2)
         {
             var objProperties = GetPropertiesValues(t1);
             var thisProperties = GetPropertiesValues(t2);
@@ -26,7 +27,7 @@ namespace Generators
                 .All(x => x);
         }
 
-        private List<Tuple<string, object>> GetPropertiesValues(T obj)
+        private static IEnumerable<Tuple<string, object>> GetPropertiesValues(T obj)
         {
             return obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Select(x => Tuple.Create(x.Name, x.GetValue(obj)))
@@ -36,73 +37,165 @@ namespace Generators
         public static bool EqualsByExpressions(T t1, T t2)
         {
             //Func<x,y,bool> Equals = (x,y) => GetPropertiesvalues(x).Zip(GetPropValues(y),(k,l)=>k.Equals(l)).All(x=>x) 
-            ParameterExpression value1 = Expression.Parameter(typeof(T), "t1");
-            ParameterExpression value2 = Expression.Parameter(typeof(T), "t2");
-            Type type = typeof(GeneratorComparer<T>);
-            MethodCallExpression GetProperties1 =
+
+            var value1 = Expression.Parameter(typeof(T), "t1");
+            var value2 = Expression.Parameter(typeof(T), "t2");
+
+            var type = typeof(GeneratorComparer<T>);
+
+            var res = GetPropertiesValuesByExpressions(t1);
+            Console.ReadKey();
+
+            var GetProperties1 =
                 Expression.Call(type.GetMethod("GetPropertiesValuesByExpressions",
                                     new[] { typeof(T) }),
             value1);
-            MethodCallExpression GetProperties2 =
+            var GetProperties2 =
                 Expression.Call(type.GetMethod("GetPropertiesValuesByExpressions",
-                                    new[] {typeof(T)}),
+                                    new[] { typeof(T) }),
                     value2);
-            List<Tuple<string, T>> properties1 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties1, value1).Compile()(t1);
-            List<Tuple<string, T>> properties2 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties2, value2).Compile()(t2);
-            ParameterExpression par1 = Expression.Parameter(typeof(List<Tuple<string, T>>), "properties1");
-            ParameterExpression par2 = Expression.Parameter(typeof(List<Tuple<string, T>>), "properties2");
+
+            var properties1 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties1, value1).Compile()(t1);
+            var properties2 = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(GetProperties2, value2).Compile()(t2);
+
+            var par1 = Expression.Parameter(typeof(List<Tuple<string, T>>), "properties1");
+            var par2 = Expression.Parameter(typeof(List<Tuple<string, T>>), "properties2");
             //TODO:Create lammda for zip
             return properties1.Zip(properties2, (x, y) => x.Equals(y)).All(x => x);
-
-
-
-
         }
 
-        public static List<Tuple<string, T>> GetPropertiesValuesByExpressions(T obj)
+        private static IEnumerable<Tuple<string, object>> GetPropertiesValuesByExpressions(T obj)
         {
             //Func<obj, lisTuple<string,object>>> getPV =
             //   p => Tuple(p.Name,p.GetValue(obj))
 
-            var type = typeof(T);
-            var param = Expression.Parameter(type, "p");
-            var propertyInfos = type.GetProperties(BindingFlags.Instance |
-                                                   BindingFlags.Public);
-            var expressions = new List<Expression>();
-            foreach (var propertyInfo in propertyInfos)
-            {
-                Expression call = Expression.Call(
-                    typeof(Tuple),
-                    "Create",
-                    new[]
-                    {
-                        typeof(string),
-                        type
-                    },new Expression[]{ Expression.Parameter(typeof(string), "property name"), GetValueExpression(propertyInfo)});
-                expressions.Add(call);
-            }
-            var ex = Expression.Lambda<Func<T, List<Tuple<string, T>>>>(
-                Expression.Block(expressions), param);
+            var param = Expression.Parameter(typeof(T), "p");
+            var propertyInfos = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            //var expressions = propertyInfos.Select(GetTupleExpression).Cast<Expression>().ToList();
+            Test();
+            var ex = Expression.Lambda<Func<T, List<Tuple<string, object>>>>(
+                Expression.Block(), param);
             return ex.Compile()(obj);
         }
-        private static MethodCallExpression GetValueExpression(PropertyInfo propertyInfo)
+
+        private static MethodCallExpression GetValueExpression(Expression instance)
         {
-            var type = typeof(PropertyInfo);
-            return Expression.Call(type,
-                "GetValue",
-                new[]
+            return Expression.Call(
+                instance,
+                typeof(PropertyInfo).GetMethod("GetValue", new[] { typeof(object) }),
+                Expression.Parameter(typeof(object), "Instance")
+            );
+        }
+
+        private static void Test()
+        {
+            var address = new Address("asdasd", "qwer");
+            var pr = address.GetType().GetProperties()[0];
+
+            var getTuple = GetTupleExpression();
+            var getValue = GetValueExpression(Expression.Constant(pr));
+
+            var flambda = Expression.Lambda<Func<object, object>>(
+                getValue,
+                getValue.Arguments.Cast<ParameterExpression>()
+            );
+            var ffunc = flambda.Compile();
+            var fres = ffunc(address);
+
+            var slambda = Expression.Lambda<Func<string, object, Tuple<string, object>>>(
+                              getTuple,
+                              getTuple.Arguments.Cast<ParameterExpression>()
+                          );
+
+            var sfunc = slambda.Compile();
+            var sres = sfunc("name", address);
+
+            var block = Expression.Block(
+                flambda.Parameters.Concat(slambda.Parameters),
+                flambda,
+                slambda
+            );
+            var tlambda = Expression.Lambda<Func<string, object, object>>(
+                block,
+                block.Variables
+            );
+            var tfunc = tlambda.Compile();
+            var tres = tfunc("asd", address);
+
+            var a = 1;
+
+        }
+
+        private static MethodCallExpression GetTupleExpression()
+        {
+            var methodInfo = typeof(Tuple)
+                .GetMethods()
+                .First(info => info.GetGenericArguments().Length == 2 && info.Name == "Create")
+                .MakeGenericMethod(typeof(string), typeof(object));
+
+            return Expression.Call(
+                methodInfo,
+                new Expression[]
                 {
-                    typeof(T),
-                }, new Expression[]{Expression.Parameter(typeof(T),"value")});
+                    Expression.Parameter(typeof(string), "string parameter"),
+                    Expression.Parameter(typeof(object), "object parameter")
+                }
+            );
         }
 
         public delegate bool EqualsByReflectionEmit(T x, T y);
 
-        //private EqualsByReflectionEmit GenerateEqualsByReflectionEmit(IDictionary<string, string> mapping)
-        //{
+        public static EqualsByReflectionEmit GenerateEqualsByReflectionEmit()
+        {
+            var dynMethod = new DynamicMethod("callme", typeof(bool), new Type[] { typeof(T), typeof(T) });
+            var prm1 = dynMethod.DefineParameter(1, ParameterAttributes.In, "x");
+            var prm2 = dynMethod.DefineParameter(2, ParameterAttributes.In, "y");
+            GenerateEqualsMethodBody(dynMethod.GetILGenerator(), new[] { prm1, prm2 });
+
+            return (EqualsByReflectionEmit)dynMethod.CreateDelegate(typeof(EqualsByReflectionEmit));
+
+        }
+
+        private static void GenerateEqualsMethodBody(ILGenerator gen, ParameterBuilder[] prm)
+        {
+            gen.Emit(OpCodes.Nop);
+
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_1);
+            gen.Emit(OpCodes.Call, typeof(GeneratorComparer<T>).GetMethod("GetPropertiesValues"));
+            gen.Emit(OpCodes.Stloc_0);
+
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_2);
+            gen.Emit(OpCodes.Call, typeof(GeneratorComparer<T>).GetMethod("GetPropertiesValues"));
+            gen.Emit(OpCodes.Stloc_1);
+
+            gen.Emit(OpCodes.Ldloc_0);
+            gen.Emit(OpCodes.Ldloc_1);
+            gen.Emit(OpCodes.Ldsfld);
+            gen.Emit(OpCodes.Dup);
+            gen.Emit(OpCodes.Brtrue_S);
+            gen.Emit(OpCodes.Pop);
+            gen.Emit(OpCodes.Ldsfld);
+            gen.Emit(OpCodes.Ldftn);
+            gen.Emit(OpCodes.Newobj, typeof(Func<Tuple<string, object>, bool>).GetConstructor(new Type[0]));
+            gen.Emit(OpCodes.Dup);
+            gen.Emit(OpCodes.Brtrue_S);
+            gen.Emit(OpCodes.Pop);
+            gen.Emit(OpCodes.Ldsfld);
+            gen.Emit(OpCodes.Ldftn);
+            gen.Emit(OpCodes.Newobj, typeof(Func<bool, bool>).GetConstructor(new Type[0]));
+            gen.Emit(OpCodes.Dup);
+            gen.Emit(OpCodes.Stsfld);
+            gen.Emit(OpCodes.Call, typeof(Enumerable).GetMethod("All"));
+            gen.Emit(OpCodes.Stloc_2);
+            gen.Emit(OpCodes.Br_S);
+
+            gen.Emit(OpCodes.Ldloc_2);
+            gen.Emit(OpCodes.Ret);
 
 
-        //}
+        }
 
         public int GetHashCode(T x)
         {

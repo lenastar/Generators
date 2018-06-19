@@ -14,14 +14,14 @@ namespace Generators
         {
             var address = new Address(null, null);
             var other = new Address(null, null);
-            Assert.IsTrue(GeneratorComparer<Address>.EqualsByExpressions(address, other));
+            Assert.IsTrue(GeneratorComparer<Address>.GenerateEqualsByReflectionEmit().Invoke(address,other));
         }
 
         [Test]
         public void AddressNotEqualToNull()
         {
             var address1 = new Address("ул. Тургенева", "4");
-            var equal = GeneratorComparer<Address>.EqualsByExpressions(address1, null);
+            var equal = GeneratorComparer<Address>.GenerateEqualsByReflectionEmit().Invoke(address1, null);
             Assert.IsFalse(equal);
         }
 
@@ -31,7 +31,7 @@ namespace Generators
             var address = new Address("A", "B");
             var person = new PersonName("A", "B");
             // ReSharper disable once SuspiciousTypeConversion.Global
-            Assert.IsFalse(GeneratorComparer<IDomain>.EqualsByExpressions(address, person));
+            Assert.IsFalse(GeneratorComparer<IDomain>.GenerateEqualsByReflectionEmit().Invoke(address, person));
         }
 
         //	[Test]
