@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using Generators.Domains;
 using NUnit.Framework;
 
 namespace Generators
@@ -8,7 +9,7 @@ namespace Generators
 	[TestFixture]
 	public class ValueType_PerformanceTests
 	{
-		public class PersonName_WithHandcodedHashCode 
+		public class PersonName_WithHandcodedHashCode:IDomain 
 		{
 			public PersonName_WithHandcodedHashCode(string firstName, string lastName)
 			{
@@ -32,18 +33,22 @@ namespace Generators
 			// But can be optimized to x2 slowdown with Expression Trees and their compilation. 
 			// See Expression.Lambda(...).Compile()
 			var count = 500000;
-			new PersonName("", "").GetHashCode();
-			new PersonName_WithHandcodedHashCode("", "").GetHashCode();
+		    GeneratorComparer<PersonName>.GetHashCodeByExpressions(new PersonName("", ""));
+			//new PersonName("", "").GetHashCode();
+		    GeneratorComparer<PersonName_WithHandcodedHashCode>.GetHashCodeByExpressions(new PersonName_WithHandcodedHashCode("", ""));
+         //   new PersonName_WithHandcodedHashCode("", "").GetHashCode();
 			var people1 = Enumerable.Range(1, count).Select(i => new PersonName(new string('f', i % 10), new string('s', i % 10))).ToList();
 			var people2 = Enumerable.Range(1, count).Select(i => new PersonName_WithHandcodedHashCode(new string('f', i % 10), new string('s', i % 10))).ToList();
 			var sw = Stopwatch.StartNew();
-			foreach (var person in people1)
-				person.GetHashCode();
+		    foreach (var person in people1)
+		        GeneratorComparer<PersonName>.GetHashCodeByExpressions(person);
+			//	person.GetHashCode();
 			Console.WriteLine("ValueType<T> GetHashCode: " + sw.Elapsed);
 			sw.Restart();
 			foreach (var person in people2)
-				person.GetHashCode();
-			Console.WriteLine("Hand coded GetHashCode:   " + sw.Elapsed);
+			    GeneratorComparer<PersonName_WithHandcodedHashCode>.GetHashCodeByExpressions(person);
+            //person.GetHashCode();
+            Console.WriteLine("Hand coded GetHashCode:   " + sw.Elapsed);
 		}
 	}
 }
