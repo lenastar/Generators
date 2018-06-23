@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Generators.Domains
+namespace Generators
 {
-    interface IDomain
+    class andomUtils
     {
     }
 }
