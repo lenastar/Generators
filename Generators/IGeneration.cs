@@ -8,5 +8,7 @@ namespace Generators
 {
     interface IGeneration
     {
+        Type GenerateClass(string name, Dictionary<string, Type> properties);
+        T GetObject<T>(string nameOfClass);
     }
 }
