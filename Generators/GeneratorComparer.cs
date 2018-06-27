@@ -11,19 +11,13 @@ namespace Generators
 {
     internal class GenerationReflection : IGeneration
     {
-        public Type GenerateClass(string name, Dictionary<string, Type> properties)
-        {
-            return null;
-        }
 
-        public T GetObject<T>(string nameOfClass)
+        public T GetObject<T>(Type nameOfClass)
         {
 
-            var type = Type.GetType(nameOfClass, true);
+            var instance = Activator.CreateInstance(nameOfClass);
 
-            var instance = Activator.CreateInstance(type);
-
-            foreach (var propertyInfo in type.GetProperties())
+            foreach (var propertyInfo in nameOfClass.GetProperties())
             {
                 var value = RandomUtils.GetRandomObject(propertyInfo.PropertyType);
                 propertyInfo.SetValue(instance, value, null);
@@ -36,75 +30,59 @@ namespace Generators
     internal class GenerationEmit : IGeneration
     {
 
-        private static TypeBuilder GetTypeBuilder()
+
+        public T GetObject<T>(Type nameOfClass)
         {
-            var typeSignature = (string)RandomUtils.GetRandomObject(typeof(string));
-            var an = new AssemblyName(typeSignature);
-            var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
-            var tb = moduleBuilder.DefineType(typeSignature,
-                    TypeAttributes.Public |
-                    TypeAttributes.Class |
-                    TypeAttributes.AutoClass |
-                    TypeAttributes.AnsiClass |
-                    TypeAttributes.BeforeFieldInit |
-                    TypeAttributes.AutoLayout,
-                    null);
-            return tb;
-        }
+            var aName = new AssemblyName("DynamicAssemblyExample");
+            var ab =
+                AppDomain.CurrentDomain.DefineDynamicAssembly(
+                    aName,
+                    AssemblyBuilderAccess.RunAndSave);
 
-        private static void CreateProperty(TypeBuilder tb, string propertyName, Type propertyType)
-        {
-            var fieldBuilder = tb.DefineField("_" + propertyName, propertyType, FieldAttributes.Private);
+            var mb =
+                ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
 
-            var propertyBuilder = tb.DefineProperty(propertyName, PropertyAttributes.HasDefault, propertyType, null);
-            var getPropMthdBldr = tb.DefineMethod("get_" + propertyName, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyType, Type.EmptyTypes);
-            var getIl = getPropMthdBldr.GetILGenerator();
+            var tb = mb.DefineType(
+            "yDynamicType",
+             TypeAttributes.Public);
 
-            getIl.Emit(OpCodes.Ldarg_0);
-            getIl.Emit(OpCodes.Ldfld, fieldBuilder);
-            getIl.Emit(OpCodes.Ret);
+            var properties = nameOfClass.GetProperties();
+            var propertyBuilders = properties.Select(propertyInfo =>
+                tb.DefineProperty(propertyInfo.Name, propertyInfo.Attributes,
+                    propertyInfo.PropertyType, propertyInfo.GetRequiredCustomModifiers())).ToList();
+           
+            foreach (var t1 in propertyBuilders)
+            {
+//  var ctorIL = ctors[0].GetILGenerator();
+                var getSetAttr = MethodAttributes.Public |
+                                 MethodAttributes.SpecialName | MethodAttributes.HideBySig;
+                var mbNumberSetAccessor = tb.DefineMethod(
+                    "set",
+                    getSetAttr,
+                    null,
+                    new[] { t1.PropertyType });
 
-            var setPropMthdBldr =
-                tb.DefineMethod("set_" + propertyName,
-                  MethodAttributes.Public |
-                  MethodAttributes.SpecialName |
-                  MethodAttributes.HideBySig,
-                  null, new[] { propertyType });
+                var setIl = mbNumberSetAccessor.GetILGenerator();
+                setIl.Emit(OpCodes.Ldarg_0);
+                setIl.Emit(OpCodes.Ldarg_1);
+                setIl.Emit(OpCodes.Stfld, t1.PropertyType);
+                setIl.Emit(OpCodes.Ret);
+              
+                t1.SetSetMethod(mbNumberSetAccessor);
+            }
+         
+            var t = tb.CreateType();
 
-            var setIl = setPropMthdBldr.GetILGenerator();
-            var modifyProperty = setIl.DefineLabel();
-            var exitSet = setIl.DefineLabel();
+            ab.Save(aName.Name + ".dll");
 
-            setIl.MarkLabel(modifyProperty);
-            setIl.Emit(OpCodes.Ldarg_0);
-            setIl.Emit(OpCodes.Ldarg_1);
-            setIl.Emit(OpCodes.Stfld, fieldBuilder);
+            var obj = Activator.CreateInstance(t);
+            foreach (var property in properties)
+            {
+                property.SetValue(obj, RandomUtils.GetRandomObject(property.PropertyType));
+            }
 
-            setIl.Emit(OpCodes.Nop);
-            setIl.MarkLabel(exitSet);
-            setIl.Emit(OpCodes.Ret);
+            return (T)obj;
 
-            propertyBuilder.SetGetMethod(getPropMthdBldr);
-            propertyBuilder.SetSetMethod(setPropMthdBldr);
-        }
-        public Type GenerateClass(string name, Dictionary<string, Type> properties)
-        {
-            var tb = GetTypeBuilder();
-            var constructor = tb.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName);
-
-            foreach (var field in properties)
-                CreateProperty(tb, field.Key, field.Value);
-
-            var objectType = tb.CreateType();
-            return objectType;
-        }
-
-        public T GetObject<T>(string nameOfClass)
-        {
-            throw new NotImplementedException();
-            //var myType = GenerateClass(nameOfClass,);
-            //return (T)Activator.CreateInstance(myType);
         }
     }
 
@@ -112,12 +90,6 @@ namespace Generators
     {
         private readonly Dictionary<Type, Func<object>> typeMapping
             = new Dictionary<Type, Func<object>>();
-
-
-        public Type GenerateClass(string name, Dictionary<string, Type> properties)
-        {
-            throw new NotImplementedException();
-        }
 
         public T GetObject<T>(string nameOfClass)
         {
