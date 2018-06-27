@@ -8,7 +8,8 @@ namespace Generators
 {
     internal static class RandomUtils
     {
-        public static readonly Dictionary<Type, Func<object>> RandomUtilDictionary = new Dictionary<Type, Func<object>>()
+        private static readonly Dictionary<Type, Func<object>> RandomUtilDictionary 
+            = new Dictionary<Type, Func<object>>
         {
             { typeof(int), () => GetRandomInt() },
             { typeof(double), () => GetRandomDouble() },
@@ -17,16 +18,38 @@ namespace Generators
             { typeof(char), () => GetRandomChar() }
         };
 
-        private static readonly char[] Chars = "$%#@!*abcdefghijklmnopqrstuvwxyz1234567890?;:ABCDEFGHIJKLMNOPQRSTUVWXYZ^&".ToCharArray();
+        private static readonly Random random = new Random();
+
+        private static readonly char[] Chars = 
+            "$%#@!*abcdefghijklmnopqrstuvwxyz1234567890?;:ABCDEFGHIJKLMNOPQRSTUVWXYZ^&"
+                .ToCharArray();
+
+        public static object GetRandomObject(Type type)
+        {
+            return RandomUtilDictionary.ContainsKey(type) 
+                ? RandomUtilDictionary[type]()
+                : null;
+        }
+
+        public static IEnumerable<T> GetRandomEnumerable<T>(int length = 10)
+        {
+            var enumerable = new List<T>();
+            for (var i = 0; i < length; i++)
+            {
+                enumerable.Add((T)GetRandomObject(typeof(T)));
+            }
+
+            return enumerable;
+        }
 
         private static int GetRandomInt(int start = -100, int end = 100)
         {
-            return new Random().Next(start, end);
+            return random.Next(start, end);
         }
 
         private static double GetRandomDouble()
         {
-            return new Random().NextDouble();
+            return random.NextDouble();
         }
 
         private static string GetRandomString(int length = 10)
@@ -42,25 +65,12 @@ namespace Generators
 
         private static char GetRandomChar()
         {
-            return Chars[new Random().Next(Chars.Length)];
+            return Chars[random.Next(Chars.Length)];
         }
 
         private static bool GetRandomBool()
         {
-            var bools = new[] { true, false };
-            return bools[new Random().Next(0, 1)];
+            return random.Next(2) == 1;
         }
-
-        public static List<object> GetRandomList<T1>(int length = 10)
-        {
-            var enumerable = new List<object>();
-            for (var i = 0; i < length; i++)
-            {
-                enumerable.Add(RandomUtilDictionary[typeof(T1)]());
-            }
-
-            return enumerable;
-        }
-
     }
 }

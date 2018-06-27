@@ -50,13 +50,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Domains\Address.cs" />
-    <Compile Include="Domains\IDomain.cs" />
-    <Compile Include="Domains\PersonName.cs" />
+    <Compile Include="RandomUtils.cs" />
     <Compile Include="GeneratorComparer.cs" />
+    <Compile Include="IGeneration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ValueType_PerformanceTests.cs" />
-    <Compile Include="ValueType_Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

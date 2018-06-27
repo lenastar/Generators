@@ -2,13 +2,14 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
 namespace Generators
 {
-    class GenerationReflection : IGeneration
+    internal class GenerationReflection : IGeneration
     {
         public Type GenerateClass(string name, Dictionary<string, Type> properties)
         {
@@ -17,14 +18,14 @@ namespace Generators
 
         public T GetObject<T>(string nameOfClass)
         {
-            
+
             var type = Type.GetType(nameOfClass, true);
-            
+
             var instance = Activator.CreateInstance(type);
 
             foreach (var propertyInfo in type.GetProperties())
             {
-                var value = RandomUtils.RandomUtilDictionary[propertyInfo.PropertyType]();
+                var value = RandomUtils.GetRandomObject(propertyInfo.PropertyType);
                 propertyInfo.SetValue(instance, value, null);
             }
 
@@ -32,12 +33,12 @@ namespace Generators
         }
     }
 
-    class GenerationEmit:IGeneration
+    internal class GenerationEmit : IGeneration
     {
 
         private static TypeBuilder GetTypeBuilder()
         {
-            var typeSignature = (string)RandomUtils.RandomUtilDictionary[typeof(string)]();
+            var typeSignature = (string)RandomUtils.GetRandomObject(typeof(string));
             var an = new AssemblyName(typeSignature);
             var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
@@ -104,6 +105,51 @@ namespace Generators
             throw new NotImplementedException();
             //var myType = GenerateClass(nameOfClass,);
             //return (T)Activator.CreateInstance(myType);
+        }
+    }
+
+    class GenerationExpressions : IGeneration
+    {
+        private readonly Dictionary<Type, Func<object>> typeMapping
+            = new Dictionary<Type, Func<object>>();
+
+
+        public Type GenerateClass(string name, Dictionary<string, Type> properties)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T GetObject<T>(string nameOfClass)
+        {
+            return GetObject<T>(Type.GetType(nameOfClass));
+        }
+
+        public T GetObject<T>(Type classOfObject)
+        {
+            if (!typeMapping.ContainsKey(classOfObject))
+            {
+                typeMapping[classOfObject] = GetInitObjectLambda(classOfObject).Compile();
+            }
+
+            return (T)typeMapping[classOfObject]();
+        }
+
+        private Expression<Func<object>> GetInitObjectLambda(Type classOfObject)
+        {
+            var newObject =
+                Expression.New(classOfObject);
+
+            var memberInfos = classOfObject.GetMembers();
+            var memberBindings = memberInfos.Select(memberInfo =>
+                Expression.Bind(
+                    memberInfo,
+                    Expression.Constant(
+                        RandomUtils.GetRandomObject(
+                            memberInfo.GetType())))).Cast<MemberBinding>().ToList();
+
+            var memberInitExpression = Expression.MemberInit(newObject, memberBindings);
+            var lambda = Expression.Lambda<Func<object>>(memberInitExpression);
+            return lambda;
         }
     }
 
