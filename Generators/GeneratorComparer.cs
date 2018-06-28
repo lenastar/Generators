@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Generators
 {
-    internal class GenerationReflection : IGeneration
+    public class GenerationReflection : IGeneration
     {
 
         public T GetObject<T>(Type nameOfClass)
@@ -27,7 +27,7 @@ namespace Generators
         }
     }
 
-    internal class GenerationEmit : IGeneration
+    public class GenerationEmit : IGeneration
     {
 
 
@@ -43,7 +43,7 @@ namespace Generators
                 ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
 
             var tb = mb.DefineType(
-            "yDynamicType",
+            nameOfClass.ToString(),
              TypeAttributes.Public);
 
             var properties = nameOfClass.GetProperties();
@@ -86,7 +86,7 @@ namespace Generators
         }
     }
 
-    class GenerationExpressions : IGeneration
+    public class GenerationExpressions : IGeneration
     {
         private readonly Dictionary<Type, Func<object>> typeMapping
             = new Dictionary<Type, Func<object>>();

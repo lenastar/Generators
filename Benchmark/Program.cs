@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
+using NUnit.Framework;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
 using Generators;
 
 namespace Benchmark
@@ -12,46 +12,37 @@ namespace Benchmark
     {
         static void Main(string[] args)
         {
+            var summary = BenchmarkRunner.Run<Benchmark>();
+            Thread.Sleep(600000);
+
         }
     }
 
-    class Benchmark
+    public class Benchmark
     {
-        protected readonly Generators.Expressions.ValueType<Address> evt;
-        protected readonly Generators.ReflectionAPI.ValueType<Address> rvt;
+        protected readonly GenerationExpressions generationExpressions;
+        protected readonly GenerationEmit generationEmit;
+        protected readonly GenerationReflection generationReflection;
 
-        public Benchmark()
+        public  Benchmark()
         {
-            evt = new Generators.Expressions.ValueType<Address>();
-            rvt = new Generators.ReflectionAPI.ValueType<Address>();
+            generationEmit = new GenerationEmit();
+            generationExpressions = new GenerationExpressions();
+            generationReflection = new GenerationReflection();
         }
+
+        [Benchmark]
+        public object ReflectionGetObject() => generationReflection.GetObject<Human>(typeof(Human));
+
+        [Benchmark]
+        public object ExpressionGetObject() => generationExpressions.GetObject<Human>(typeof(Human));
+        [Benchmark]
+        public object ReflectionEmitGetObject() => generationEmit.GetObject<Human>(typeof(Generators.Human));
     }
 
-    class BenchmarkEquals : Benchmark
-    {
+   
 
-        [Benchmark]
-        public bool ReflectionEquals() => rvt.Equals(new Address("Stark", "Ova"));
 
-        [Benchmark]
-        public bool ExpressionEquals() => evt.Equals(new Address("Stark", "Ova"));
-    }
 
-    class BenchmarkToString : Benchmark
-    {
-        [Benchmark]
-        public string ReflectionToString() => rvt.ToString();
 
-        [Benchmark]
-        public string ExpressionToString() => evt.ToString();
-    }
-
-    class BenchmarkGetHashCode : Benchmark
-    {
-        [Benchmark]
-        public int ReflectionGetHashCode() => rvt.GetHashCode();
-
-        [Benchmark]
-        public int ExpressionGetHashCode() => evt.GetHashCode();
-    }
 }
