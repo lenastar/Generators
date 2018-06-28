@@ -8,10 +8,11 @@ namespace Generators
 {
     public class Human
     {
-        public string Sname;
-        public string Name;
-        public int Age;
-        public bool IsMarried;
+        public string Sname { get; set; }
+
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public bool IsMarried { get; set; }
 
     }
 }

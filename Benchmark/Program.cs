@@ -20,9 +20,9 @@ namespace Benchmark
 
     public class Benchmark
     {
-        protected readonly GenerationExpressions generationExpressions;
-        protected readonly GenerationEmit generationEmit;
-        protected readonly GenerationReflection generationReflection;
+        private readonly GenerationExpressions generationExpressions;
+        private readonly GenerationEmit generationEmit;
+        private readonly GenerationReflection generationReflection;
 
         public  Benchmark()
         {
